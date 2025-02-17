@@ -2,9 +2,13 @@ package FileOperations;
 
 import Menu.Emenu;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -32,40 +36,33 @@ public class FileEncrypted implements FileOperation {
     }
 
     private Path getSourse(Scanner scanner) {//То что надо зашифровать
-        System.out.println("Введите путь файла который нужно зашифровать: ");
+        System.out.print("Введите путь файла который нужно зашифровать: ");
         return Paths.get(scanner.nextLine());
     }
 
     private Path getResult() {//То куда попадет зашифрованный текст
-        return Paths.get("C:\\Users\\Gigabyte\\IdeaProjects\\CryptoAnalyzer\\src\\Sources\\encrypt.txt");
+        return Paths.get(("C:\\Users\\Gigabyte\\IdeaProjects\\CryptoAnalyzer\\src\\Sources\\encrypt.txt"));
     }
 
     private int getKey(Scanner scanner) {//Ключ для шифровки
-        System.out.println("Введите ключ для Шифровки: ");
+        System.out.print("Введите ключ для Шифровки: ");
         return scanner.nextInt();
     }
 
-    private void encrypting(Path soursePath, Path resultPath, List<Character> alphabeet, int key) {//Шифратор
-        try (FileChannel source = FileChannel.open(soursePath, StandardOpenOption.READ);
-             FileChannel resultt = FileChannel.open(resultPath, StandardOpenOption.WRITE)) {
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
-            while (source.read(buffer) != -1) {
-                buffer.flip();
-                while (buffer.hasRemaining()){
-                    byte b = buffer.get();
-                    char c = (char) b;
-                    if (alphabeet.contains(c)) {
-                        int index = alphabeet.indexOf(c);
-                        int newIndex = (index + key);
-                        char encrypted = alphabeet.get(newIndex);
-                        resultt.write(ByteBuffer.wrap(new byte[] { (byte) encrypted }));
+    private void encrypting(Path sourcePath, Path resultPath, List<Character> alphabet, int key) {
+        try (BufferedReader source = Files.newBufferedReader(sourcePath, StandardCharsets.UTF_8);
+             BufferedWriter result = Files.newBufferedWriter(resultPath, StandardCharsets.UTF_8)) {
+            int char1;
+            while ((char1 = source.read()) != -1) {
+                    char c = (char) char1;
+                    int index = alphabet.indexOf(c);
+                    if (index != -1) {
+                        int newIndex = Math.floorMod(index + key, alphabet.size());
+                        result.write(alphabet.get(newIndex));
                     } else {
-                        resultt.write(ByteBuffer.wrap(new byte[] { (byte) c }));
+                        result.write(c);
                     }
-                }
-                buffer.clear();
             }
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
